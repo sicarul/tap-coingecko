@@ -1,11 +1,13 @@
 """Stream type classes for tap-coingecko."""
 
-import pendulum, requests, time, logging, copy
+import pendulum, requests, time, logging, copy, backoff
 from datetime import datetime, date, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Iterable, cast
+from typing import Any, Dict, Optional, Union, List, Iterable, cast, Callable
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
+from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
+
 
 from singer_sdk.streams import RESTStream
 
@@ -25,6 +27,19 @@ class CoingeckoStream(RESTStream):
     replication_key = 'date'
     replication_method = "INCREMENTAL"
     is_sorted = True
+
+    def request_decorator(self, func: Callable) -> Callable:
+        decorator: Callable = backoff.on_exception(
+            backoff.expo,
+            (
+                RetriableAPIError,
+                requests.exceptions.ReadTimeout,
+            ),
+            max_tries=8,
+            factor=3,
+        )(func)
+        return decorator
+
 
     def request_records(self, context: Optional[dict]) -> Iterable[dict]:
         next_page_token: Any = self.get_next_page_token(None, None, context)
@@ -53,7 +68,7 @@ class CoingeckoStream(RESTStream):
             # Cycle until get_next_page_token() no longer returns a value
             finished = not next_page_token
             if not finished:
-                time.sleep(0.2) # Wait 0.2s before next request
+                time.sleep(0.3) # Wait 0.3s before next request
 
 
     def get_next_page_token(
