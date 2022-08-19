@@ -68,7 +68,8 @@ class CoingeckoStream(RESTStream):
             # Cycle until get_next_page_token() no longer returns a value
             finished = not next_page_token
             if not finished:
-                time.sleep(1.1) # Wait 1.1s before next request
+                wait_time = self.config["wait_time_between_requests"]
+                time.sleep(wait_time) # Wait before next request
 
 
     def get_next_page_token(

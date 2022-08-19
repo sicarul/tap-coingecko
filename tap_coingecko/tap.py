@@ -1,5 +1,6 @@
 """Coingecko tap class."""
 
+from importlib.metadata import requires
 from typing import List
 
 from singer_sdk import Tap, Stream
@@ -41,6 +42,13 @@ class TapCoingecko(Tap):
             description="First date to obtain token price for",
             default="2022-03-01"
         ),
+        th.Property(
+            "wait_time_between_requests",
+            th.Integer,
+            required=True,
+            description="Number of seconds to wait between requests",
+            default=5
+        )
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
