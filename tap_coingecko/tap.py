@@ -44,7 +44,7 @@ class TapCoingecko(Tap):
         ),
         th.Property(
             "wait_time_between_requests",
-            th.Integer,
+            th.IntegerType,
             required=True,
             description="Number of seconds to wait between requests",
             default=5
